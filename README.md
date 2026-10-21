@@ -31,7 +31,7 @@ pad, in 4:3, 16:9 or 21:9, with sound, and the progress saves and loads again af
 | Start screen (ROM picker, Play) | works |
 | Side menu: aspect 4:3 / 16:9 / 21:9 (true widescreen), sharp / smooth, resolution, FPS counter, pad options | works (in widescreen the HUD and menus stay 4:3-wide in the middle) |
 | Pad editor (move and resize every control) | works |
-| Save states, HUD out at the wide edges | planned |
+| Save states, HUD out at the wide edges | planned: [docs/UI-WISHLIST.md](docs/UI-WISHLIST.md) |
 
 Every fix it took is listed with its cause in [docs/ANDROID-FIXES.md](docs/ANDROID-FIXES.md).
 

@@ -45,16 +45,13 @@ local.properties
 *.keystore
 platform-tools-latest.zip
 
-# Agent working files (run screenshots/logs, backups, session logs)
+# Local AI-agent working kit and notes (kept on the developer's PC, not published)
 .json/
-qwen/runs/
-qwen/backups/
-qwen/logs/*.log
-qwen/logs/*.txt
-# ROM-derived (game code/data): never commit
-qwen/ghidra/racer_code.bin
-qwen/ghidra/proj/
-qwen/ghidra/out/
+qwen/
+.opencode/
+AGENTS.md
+HANDOFF.md
+docs/QWEN_*.md
 
 # RSPRecomp output (made from the ROM) and local configs with ROM paths
 rsp/
