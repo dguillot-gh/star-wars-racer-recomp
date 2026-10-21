@@ -61,6 +61,9 @@ REDIRECTS = {
     # 0x141E200 read as 0 and every model/part load (func_800305F4) returned NULL -> black screen after the legal
     # screen and the 2 s NULL list scans ([bad-addr] 0x80000000). src/main.cpp reads the ROM word instead.
     "func_8008A710": "racer_osPiReadIo",
+    # Android 2026-10-21 (Claude): the game's spin-wait for the last graphics task -> same loop with a 0.2 ms sleep
+    # (src/main.cpp). The spin held the big core at 100% and throttled the phone.
+    "func_8002E034": "racer_wait_gfx_done",
     # Android 2026-10-21 (Claude): the game's AI copies write the audio-interface registers (0xA4500000), which the
     # memory hook absorbs, so no buffer ever reached SDL. The runtime versions feed src/audio.cpp.
     "func_8008815C": "osAiSetFrequency_recomp",       # DACRATE/BITRATE from a0 (Hz), returns the real rate

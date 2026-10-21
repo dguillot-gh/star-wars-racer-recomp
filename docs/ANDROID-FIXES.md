@@ -107,6 +107,14 @@ Each fix: symptom -> cause -> change (files).
     its width inside the middle 4:3 area, menus stay 4:3, the 3D fills the wide screen. (Anchoring each rectangle to
     the left / right edge was tried and dropped: Racer draws text letter by letter, so words were torn apart.)
 
+26. **Game thread spinning at 100% of the big core** (Claude, 2026-10-21, simpleperf). The game waits for each
+    graphics task in a tight loop (func_8002E034: poll messages, read the clock, until the flag at 0x800A2690 clears);
+    70% of the game thread's time, mostly clock_gettime. The heat pushed the phone into throttling (big core capped
+    at 1.16 of 2.91 GHz). -> `racer_wait_gfx_done` in `src/main.cpp` (redirect in `tools/post_recomp_patches.py`):
+    the same loop with a 0.2 ms sleep; game thread 110% -> ~30% CPU. `debug.swe1r.spinwait=1` restores the spin.
+    FPS is then limited by resolution / GPU and heat (21:9 at 3x ~50 fps, 1x ~59 fps on a warm, charging phone);
+    `[fps]` lines in logcat (tag SWE1Racer-stdio) log the game frame rate once a second.
+
 ## Build notes
 
 - Native build type RelWithDebInfo (`android/app/build.gradle`); Debug (-O0) builds hid the heap corruption.

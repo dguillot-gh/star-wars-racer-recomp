@@ -292,6 +292,7 @@ public:
                 const float seconds = float(now - fps_window_start_) / 1000.0f;
                 g_game_fps.store(fps_frames_ / seconds);
                 g_dl_rate.store((dl_count_ - fps_dl_start_) / seconds);
+                printf("[fps] game %.1f  lists %.1f\n", fps_frames_ / seconds, (dl_count_ - fps_dl_start_) / seconds);
                 fps_frames_ = 0;
                 fps_dl_start_ = dl_count_;
                 fps_window_start_ = now;

@@ -39,6 +39,7 @@ void osPfsInitPak_recomp(uint8_t* rdram, recomp_context* ctx);
 void osMotorInit_recomp(uint8_t* rdram, recomp_context* ctx);
 void racer_osMotorAccess(uint8_t* rdram, recomp_context* ctx);
 void racer_osPiReadIo(uint8_t* rdram, recomp_context* ctx);
+void racer_wait_gfx_done(uint8_t* rdram, recomp_context* ctx);
 void osAiSetFrequency_recomp(uint8_t* rdram, recomp_context* ctx);
 void osAiSetNextBuffer_recomp(uint8_t* rdram, recomp_context* ctx);
 void osAiGetLength_recomp(uint8_t* rdram, recomp_context* ctx);

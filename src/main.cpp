@@ -32,6 +32,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <sys/system_properties.h>
 #endif
 
 #include "recomp.h"
@@ -148,6 +149,51 @@ extern "C" void racer_osPiReadIo(uint8_t* rdram, recomp_context* ctx) {
         MEM_W(0, ctx->r5) = 0;
     }
     ctx->r2 = 0;
+}
+
+// RACER PATCH (2026-10-21, Claude): the game's wait for the last graphics task (func_8002E034), rewritten with a short
+// sleep. The original loops "poll the message queue (func_8002E2FC), update the frame clock (static_0_8002E124)"
+// until the task-pending flag at 0x800A2690 clears. On the N64 that spin was free; on the phone it kept the game thread
+// at 100% of the big core (70% of its time, mostly clock_gettime), which heated the phone into throttling (big core
+// capped at 1.16 of 2.91 GHz) and cost frames. Same calls and stores as the original, plus a 0.2 ms sleep while the
+// flag is still set. debug.swe1r.spinwait=1 keeps the original spin (for A/B tests).
+extern "C" void func_8002E2FC(uint8_t* rdram, recomp_context* ctx);
+extern "C" void static_0_8002DFB0(uint8_t* rdram, recomp_context* ctx);
+extern "C" void static_0_8002E124(uint8_t* rdram, recomp_context* ctx);
+extern "C" void racer_wait_gfx_done(uint8_t* rdram, recomp_context* ctx) {
+    static const bool spin = [] {
+        char v[92] = {};
+#if defined(__ANDROID__)
+        __system_property_get("debug.swe1r.spinwait", v);
+#endif
+        printf("[wait] gfx-done wait %s\n", v[0] == '1' ? "spins (debug.swe1r.spinwait=1)" : "sleeps 0.2 ms per poll");
+        return v[0] == '1';
+    }();
+    ctx->r29 = ADD32(ctx->r29, -0x20);
+    MEM_W(0x1C, ctx->r29) = ctx->r31;
+    MEM_W(0x18, ctx->r29) = ctx->r16;
+    ctx->r4 = 0x3F;
+    ctx->r5 = 0;
+    static_0_8002DFB0(rdram, ctx);
+    ctx->r16 = S32(0x800A << 16);
+    ctx->r16 = ADD32(ctx->r16, 0x2690);
+    while (MEM_W(0x0, ctx->r16) != 0) {
+        func_8002E2FC(rdram, ctx);
+        static_0_8002E124(rdram, ctx);
+        if (!spin && MEM_W(0x0, ctx->r16) != 0) {
+            std::this_thread::sleep_for(std::chrono::microseconds(200));
+        }
+    }
+    ctx->r1 = S32(0x800A << 16);
+    MEM_W(0x2698, ctx->r1) = 0;
+    ctx->r4 = 0x40;
+    ctx->r5 = 0;
+    static_0_8002DFB0(rdram, ctx);
+    ctx->r31 = MEM_W(0x1C, ctx->r29);
+    ctx->r24 = 1;
+    MEM_W(0x0, ctx->r16) = ctx->r24;
+    ctx->r16 = MEM_W(0x18, ctx->r29);
+    ctx->r29 = ADD32(ctx->r29, 0x20);
 }
 
 // RACER PATCH: MMIO absorption hook for N64 device-register writes.
