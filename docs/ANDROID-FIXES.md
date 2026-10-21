@@ -100,6 +100,13 @@ Each fix: symptom -> cause -> change (files).
     (x 8..312, y 16..464); the border is TV overscan on hardware and kept stale pixels: small blocks at the corners
     in 4:3, wide coloured strips in widescreen. -> `lib/rt64/src/hle/rt64_vi.cpp` crops the VI picture to that area.
 
+25. **HUD stretched in widescreen** (Claude, 2026-10-21; user checked races and menus). RT64 keeps small 2D
+    rectangles at their real width only when the frame's scissor has the picture's shape, and it compared raw
+    framebuffer pixels: Racer's 304x448 scissor (2:1 pixels) never matched. -> for rectangles only, the check uses
+    picture space (`lib/rt64/src/render/rt64_framebuffer_renderer.cpp`; square-pixel games unchanged). The HUD keeps
+    its width inside the middle 4:3 area, menus stay 4:3, the 3D fills the wide screen. (Anchoring each rectangle to
+    the left / right edge was tried and dropped: Racer draws text letter by letter, so words were torn apart.)
+
 ## Build notes
 
 - Native build type RelWithDebInfo (`android/app/build.gradle`); Debug (-O0) builds hid the heap corruption.
