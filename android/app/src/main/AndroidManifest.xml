@@ -6,15 +6,24 @@
         android:hasCode="true"
         android:label="Star Wars Episode I: Racer"
         android:theme="@android:style/Theme.Material.NoActionBar">
+        <!-- Start screen: pick the ROM, then Play (2026-10-21). -->
         <activity
-            android:name=".SWE1RacerActivity"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|density|keyboard|keyboardHidden|navigation|touchscreen"
+            android:name=".LauncherActivity"
             android:exported="true"
             android:screenOrientation="sensorLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <!-- The game, in its own process: SDL cannot start twice in one process, so quitting ends it.
+             Exported (no intent filter) only so adb test scripts can start it; without a ROM it opens the launcher. -->
+        <activity
+            android:name=".SWE1RacerActivity"
+            android:process=":game"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|density|keyboard|keyboardHidden|navigation|touchscreen"
+            android:exported="true"
+            android:screenOrientation="sensorLandscape">
         </activity>
     </application>
 </manifest>

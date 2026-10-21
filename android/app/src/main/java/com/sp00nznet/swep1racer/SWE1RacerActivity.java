@@ -1,23 +1,23 @@
 package com.sp00nznet.swep1racer;
 
-import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import android.os.Process;
+import android.view.KeyEvent;
 
 import org.libsdl.app.SDLActivity;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 
+/**
+ * The game. Started from LauncherActivity (the start screen picks and checks the ROM), in its own process ":game"
+ * (AndroidManifest.xml): SDL cannot start twice in one process, so leaving the game ends that process and the
+ * launcher is back for the next Play.
+ */
 public final class SWE1RacerActivity extends SDLActivity {
-    private static final String TAG = "SWE1Racer";
-    private static final int REQUEST_ROM = 4201;
     private static final String ROM_RELATIVE_PATH = "swe1racer/roms/selected.z64";
 
     // Implemented in src/main.cpp.
@@ -30,71 +30,52 @@ public final class SWE1RacerActivity extends SDLActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // No ROM yet (started some other way than Play): go to the start screen instead of a game that waits.
+        if (!new File(getFilesDir(), ROM_RELATIVE_PATH).isFile()) {
+            super.onCreate(savedInstanceState);
+            startActivity(new Intent(this, LauncherActivity.class));
+            finish();
+            return;
+        }
         super.onCreate(savedInstanceState);
         if (mLayout != null) {
             mLayout.addView(new TouchPadView(this), new android.view.ViewGroup.LayoutParams(
                     android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                     android.view.ViewGroup.LayoutParams.MATCH_PARENT));
         }
-        File rom = new File(getFilesDir(), ROM_RELATIVE_PATH);
-        if (!rom.isFile()) {
-            new Handler(Looper.getMainLooper()).postDelayed(this::requestRom, 700);
-        }
     }
 
-    private void requestRom() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
-        try {
-            startActivityForResult(intent, REQUEST_ROM);
-        } catch (Exception e) {
-            Log.e(TAG, "Could not open Android's document picker", e);
+    // SDL takes the Back key in its own key handling before onBackPressed runs, so catch it here first.
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                askQuit();
+            }
+            return true;
         }
+        return super.dispatchKeyEvent(event);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != REQUEST_ROM || resultCode != Activity.RESULT_OK || data == null) {
-            return;
-        }
+    public void onBackPressed() {
+        askQuit();
+    }
 
-        Uri uri = data.getData();
-        if (uri == null) {
-            Log.e(TAG, "Document picker returned no ROM URI");
-            return;
-        }
+    private void askQuit() {
+        new AlertDialog.Builder(this)
+                .setMessage("Quit Star Wars Episode I: Racer?\nRace progress the game has saved is kept.")
+                .setPositiveButton("Quit", (d, w) -> finish())
+                .setNegativeButton("Keep playing", null)
+                .show();
+    }
 
-        File rom = new File(getFilesDir(), ROM_RELATIVE_PATH);
-        File parent = rom.getParentFile();
-        if (parent == null || (!parent.isDirectory() && !parent.mkdirs())) {
-            Log.e(TAG, "Could not create private ROM directory");
-            return;
-        }
-
-        File temporary = new File(parent, "selected.z64.partial");
-        try (InputStream input = getContentResolver().openInputStream(uri);
-             OutputStream output = new FileOutputStream(temporary)) {
-            if (input == null) {
-                throw new IllegalStateException("The selected document could not be opened");
-            }
-            byte[] buffer = new byte[64 * 1024];
-            int count;
-            while ((count = input.read(buffer)) != -1) {
-                output.write(buffer, 0, count);
-            }
-            output.flush();
-            if (rom.exists() && !rom.delete()) {
-                throw new IllegalStateException("Could not replace the selected ROM");
-            }
-            if (!temporary.renameTo(rom)) {
-                throw new IllegalStateException("Could not finish copying the selected ROM");
-            }
-            Log.i(TAG, "Copied user-selected ROM into app-private storage");
-        } catch (Exception e) {
-            temporary.delete();
-            Log.e(TAG, "Failed to import selected ROM", e);
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // SDL and the recompiled game cannot be restarted in this process; end it so the next Play starts clean.
+        // Not inside onDestroy itself: Android has not recorded the finish yet, sees the process die and starts the
+        // game again. A moment later the activity is gone and the launcher (the task's root) comes back.
+        new Handler(Looper.getMainLooper()).postDelayed(() -> Process.killProcess(Process.myPid()), 400);
     }
 }

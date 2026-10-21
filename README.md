@@ -28,7 +28,8 @@ pad, in 4:3, with sound, and the progress saves and loads again after the app is
 | Sound (audio microcode recompiled with RSPRecomp) | works; not yet checked for crackle or drift over long play |
 | Saves (16 Kbit EEPROM) | works: Tournament progress survives closing the app |
 | Home / app switch / screen lock | works: the game resumes where it was; landscape only |
-| Launcher, side menu, pad editor | planned |
+| Start screen (ROM picker, Play) | works |
+| Side menu, pad editor, picture options | planned |
 
 Every fix it took is listed with its cause in [docs/ANDROID-FIXES.md](docs/ANDROID-FIXES.md).
 
@@ -61,7 +62,8 @@ git clone --recursive https://github.com/dguillot-gh/star-wars-racer-recomp.git
    (writes `rsp/aspMain.cpp`, also made from your ROM).
 3. Build the app: `gradle -p android :app:assembleDebug` (set `ANDROID_HOME`, `ANDROID_NDK_HOME` and `JAVA_HOME`
    first). The APK is `android/app/build/outputs/apk/debug/app-debug.apk`.
-4. Install it with `adb install -r`, start it, and pick your ROM when the file picker opens.
+4. Install it with `adb install -r` and open it: the start screen asks for your ROM (file picker; .z64, .v64 or
+   .n64, checked by SHA-1), then Play.
 
 ## What the build does to your PC
 

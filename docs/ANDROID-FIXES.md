@@ -90,6 +90,12 @@ Each fix: symptom -> cause -> change (files).
     the manifest. -> `SDL_HINT_ORIENTATIONS` "LandscapeLeft LandscapeRight" in `src/main.cpp` and
     `sensorLandscape` in the manifest.
 
+23. **25 s black screen at boot** (Claude, 2026-10-21, simpleperf). The game waits for its first frame to finish
+    (RDP-done event on queue 0x800D7420, func_8002E034), and RT64 could not draw it until all its GPU pipelines were
+    built, one at a time since fix 9. Fix 9's crashes were really fix 10's heap overflow, so compiles are parallel
+    again (`lib/rt64/src/render/rt64_raster_shader.cpp`; `debug.swe1r.serialpipe=1` restores the lock): first frame
+    in 14-18 s instead of 25 s, 4 cold boots without a crash.
+
 ## Build notes
 
 - Native build type RelWithDebInfo (`android/app/build.gradle`); Debug (-O0) builds hid the heap corruption.
