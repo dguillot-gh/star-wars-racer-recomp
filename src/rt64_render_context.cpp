@@ -10,6 +10,9 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#if defined(__ANDROID__)
+#include <sys/system_properties.h>
+#endif
 
 #include "ultramodern/renderer_context.hpp"
 #include "librecomp/game.hpp"
@@ -119,11 +122,17 @@ public:
         case RT64::Application::SetupResult::Success:
             printf("[SWE1R] RT64 initialized successfully\n");
 #if defined(__ANDROID__)
-            // Android 2026-10-20 (Claude): draw everything with the ubershader. The Mali-G715 driver's shader
-            // compiler crashes (SIGSEGV in cmpbe_compile_gles_shader) building some of RT64's specialized pipelines;
-            // the ubershader compiled fine and drew 2940 display lists. Needs the RACER PATCH in rt64_state.cpp.
-            app_->workloadQueue->ubershadersOnly = true;
-            printf("[SWE1R] RT64 ubershaders only (no specialized shader compiles)\n");
+            // Android 2026-10-20 (Claude): ubershader-only mode was a workaround for Mali shader-compiler crashes.
+            // 2026-10-21: those crashes were our own heap overflow (16K EEPROM, MTE found it), so specialized shaders
+            // are back by default (textures were garbled with the ubershader). `adb shell setprop debug.swe1r.uber 1`
+            // forces the ubershader again for A/B tests (needs the RACER PATCH in rt64_state.cpp).
+            {
+                char prop[PROP_VALUE_MAX] = {};
+                __system_property_get("debug.swe1r.uber", prop);
+                const bool uber = (prop[0] == '1');
+                app_->workloadQueue->ubershadersOnly = uber;
+                printf("[SWE1R] RT64 %s\n", uber ? "ubershaders only (debug.swe1r.uber=1)" : "specialized shaders on");
+            }
 #endif
             is_valid_ = true;
             break;

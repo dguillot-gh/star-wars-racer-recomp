@@ -21,7 +21,7 @@ menu and the attract-mode race demo, in 4:3, with sound.
 | Part | State |
 |---|---|
 | Boot, game loop, asset loading | works |
-| Picture (RT64 on Vulkan, Mali-G715) | works, 4:3; some textures look garbled; small garbage blocks below the picture corners |
+| Picture (RT64 on Vulkan, Mali-G715) | works, 4:3, textures correct; small garbage blocks below the picture corners |
 | ROM import (system file picker) | works |
 | On-screen touch pad, gamepad | implemented, not yet tested in the menus |
 | Sound (audio microcode recompiled with RSPRecomp) | works; not yet checked for crackle or drift over long play |

@@ -69,6 +69,14 @@ Each fix: symptom -> cause -> change (files).
     in `src/main.cpp`; redirects for osAiSetFrequency (func_8008815C), osAiSetNextBuffer (func_800882B0),
     osAiGetLength (static_0_800883E0) and osAiGetStatus (static_0_8008ADA0) to the runtime.
 
+19. **Garbled textures** (Claude, 2026-10-21; checked by the user on the Pixel 8). The texture data in RDRAM decoded
+    correctly on the PC (a contact sheet of every texture in a race), so the fault was in RT64 on the Mali GPU: the
+    ubershader and RT64's compute texture decoder (`TextureDecodeCS`) both garbled ground, wall and title-screen
+    textures. -> specialized shaders are back on (`src/rt64_render_context.cpp`; the old Mali crash was our heap
+    overflow, fix 10), and on Android every tile samples raw TMEM in the raster shader
+    (`lib/rt64/src/hle/rt64_state.cpp`). Debug switches: `adb shell setprop debug.swe1r.rawtmem 0` (old decode path),
+    `adb shell setprop debug.swe1r.uber 1` (ubershader only).
+
 ## Build notes
 
 - Native build type RelWithDebInfo (`android/app/build.gradle`); Debug (-O0) builds hid the heap corruption.
