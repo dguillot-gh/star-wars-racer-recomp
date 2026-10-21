@@ -23,7 +23,7 @@ pad, in 4:3, with sound, and the progress saves and loads again after the app is
 | Boot, game loop, asset loading | works |
 | Picture (RT64 on Vulkan, Mali-G715) | works, 4:3, textures correct; small garbage blocks below the picture corners |
 | ROM import (system file picker) | works |
-| On-screen touch pad | works (menus and a full race); every button checked; L removed (Racer does not use it); BOOST button (hold to charge, let go to fire) |
+| On-screen touch pad | works (menus and a full race); every button checked; L removed (Racer does not use it); BOOST button (one thumb: hold to charge, fires by itself after 1.2 s, quick re-tap fires now) |
 | Gamepad | implemented, not tested |
 | Sound (audio microcode recompiled with RSPRecomp) | works; not yet checked for crackle or drift over long play |
 | Saves (16 Kbit EEPROM) | works: Tournament progress survives closing the app |

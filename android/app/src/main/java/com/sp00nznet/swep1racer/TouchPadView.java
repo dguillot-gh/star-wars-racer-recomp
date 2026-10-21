@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -28,11 +29,14 @@ public final class TouchPadView extends View {
     private static final float[] BR = { 0.090f, 0.075f, 0.075f, 0.065f, 0.050f, 0.048f, 0.048f, 0.048f, 0.048f };
     private static final String[] LABEL = { "A", "B", "Z", "R", "START", "C^", "Cv", "C<", "C>" };
 
-    // BOOST (2026-10-21): hold to charge, let go to fire. While held it holds A (accelerate) and pushes the stick
-    // forward (the stick still steers). On release it lets go of A for BOOST_GAP_MS and then presses A again for
-    // BOOST_TAP_MS: Racer fires a charged boost on that second accelerate press.
+    // BOOST (2026-10-21), one thumb. Racer charges a boost while accelerate is held (above ~half top speed), fires it
+    // on a fresh accelerate press, and cancels it as soon as accelerate is let go. So BOOST:
+    //  - held: holds A (accelerate) and pushes the stick forward (the stick still steers);
+    //  - after BOOST_CHARGE_MS of holding: fires by itself (A off for BOOST_GAP_MS, then on again) and keeps holding A;
+    //  - lift and re-tap within BOOST_RETAP_MS: fires right away (for when the automatic fire came before the charge);
+    //  - released: A stays held for BOOST_GRACE_MS so the thumb can slide over to A without a throttle gap.
     private static final float BOOST_X = 0.70f, BOOST_Y = 0.60f, BOOST_R = 0.065f;
-    private static final long BOOST_GAP_MS = 100, BOOST_TAP_MS = 150;
+    private static final long BOOST_CHARGE_MS = 1200, BOOST_GAP_MS = 80, BOOST_RETAP_MS = 400, BOOST_GRACE_MS = 250;
 
     private static final float STICK_X = 0.17f, STICK_Y = 0.70f, STICK_R = 0.20f; // stick base, radius = fraction of height
     private static final float TOGGLE_X = 0.50f, TOGGLE_Y = 0.06f, TOGGLE_R = 0.045f;
@@ -47,7 +51,12 @@ public final class TouchPadView extends View {
     private float stickX = 0f, stickY = 0f;   // -1..1, y up = +1
     private int buttons = 0;                  // buttons under the fingers
     private boolean boostHeld = false;
-    private int boostPhase = 0;               // 0 idle, 1 A forced off (gap), 2 A forced on (fire tap)
+    private boolean boostGap = false;         // A forced off for a moment: the release half of a fire
+    private long boostReleasedAt = -100000;   // uptime of the last BOOST release
+    private long boostGraceUntil = 0;         // A held until this uptime after BOOST is released
+    private final Runnable boostAutoFire = this::boostFire;
+    private final Runnable boostGapEnd = () -> { boostGap = false; send(); invalidate(); };
+    private final Runnable boostGraceEnd = () -> { send(); invalidate(); };
     private int lastSentButtons = -1;
     private float lastSentX = 99f, lastSentY = 99f;
     private int shownButtons = 0;             // what the game gets (fingers + BOOST), for drawing pressed buttons
@@ -83,7 +92,7 @@ public final class TouchPadView extends View {
                 visible = !visible;
                 stickPointerId = -1;
                 buttons = 0; stickX = 0f; stickY = 0f;
-                boostHeld = false; boostPhase = 0;
+                boostHeld = false; boostGap = false; boostGraceUntil = 0;
                 handler.removeCallbacksAndMessages(null);
                 send();
                 invalidate();
@@ -140,42 +149,52 @@ public final class TouchPadView extends View {
         }
         buttons = newButtons;
         stickX = sx; stickY = sy;
+        long now = SystemClock.uptimeMillis();
         if (newBoost && !boostHeld) {
-            handler.removeCallbacksAndMessages(null); // a new charge cancels a fire tap still in progress
-            boostPhase = 0;
+            handler.removeCallbacks(boostAutoFire);
+            boostHeld = true;
+            if (now - boostReleasedAt < BOOST_RETAP_MS) {
+                boostFire();                      // quick re-tap: fire now (no automatic fire later: it would cancel it)
+            } else {
+                handler.postDelayed(boostAutoFire, BOOST_CHARGE_MS);
+            }
         } else if (!newBoost && boostHeld) {
-            startBoostFire();
+            handler.removeCallbacks(boostAutoFire);
+            handler.removeCallbacks(boostGapEnd);
+            boostHeld = false;
+            boostGap = false;
+            boostReleasedAt = now;
+            boostGraceUntil = now + BOOST_GRACE_MS;
+            handler.postDelayed(boostGraceEnd, BOOST_GRACE_MS + 5);
         }
-        boostHeld = newBoost;
         send();
         invalidate();
         return true;
     }
 
-    // Release of BOOST: A off for BOOST_GAP_MS, then A on for BOOST_TAP_MS, then back to the fingers.
-    private void startBoostFire() {
-        boostPhase = 1;
-        handler.postDelayed(() -> {
-            boostPhase = 2;
-            send();
-            invalidate();
-            handler.postDelayed(() -> {
-                boostPhase = 0;
-                send();
-                invalidate();
-            }, BOOST_TAP_MS);
-        }, BOOST_GAP_MS);
+    // Fire: let go of A for BOOST_GAP_MS while BOOST is held; A comes back on by itself (the fresh press fires).
+    private void boostFire() {
+        if (!boostHeld) {
+            return;
+        }
+        boostGap = true;
+        handler.removeCallbacks(boostGapEnd);
+        handler.postDelayed(boostGapEnd, BOOST_GAP_MS);
+        send();
+        invalidate();
     }
 
     private void send() {
         int outButtons = buttons;
         float outY = stickY;
         if (boostHeld) {
-            outButtons |= BTN_A;
             outY = 1f;
-        } else if (boostPhase == 1) {
-            outButtons &= ~BTN_A;
-        } else if (boostPhase == 2) {
+            if (boostGap) {
+                outButtons &= ~BTN_A;
+            } else {
+                outButtons |= BTN_A;
+            }
+        } else if (SystemClock.uptimeMillis() < boostGraceUntil) {
             outButtons |= BTN_A;
         }
         shownButtons = outButtons;
