@@ -1,0 +1,20 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:allowBackup="false"
+        android:gwpAsanMode="always"
+        android:memtagMode="sync"
+        android:hasCode="true"
+        android:label="Star Wars Episode I: Racer"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity
+            android:name=".SWE1RacerActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|density|keyboard|keyboardHidden|navigation|touchscreen"
+            android:exported="true"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

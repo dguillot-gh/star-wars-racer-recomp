@@ -1,0 +1,124 @@
+# =============================================================================
+# Star Wars Episode I: Racer - N64 Static Recompilation Config
+# =============================================================================
+# "Now THIS is podracing!" - Anakin Skywalker
+#
+# Target: N64Recomp static recompiler
+# ROM: Star Wars Episode I - Racer (U) [!].z64
+# Game Code: NEPE
+# CRC1: 0x72F70398  CRC2: 0x6556A98B
+# =============================================================================
+
+[input]
+entrypoint = 0x80000400
+symbols_file_path = "symbols.toml"
+rom_file_path = "baserom.z64"
+output_func_path = "RecompiledFuncs"
+single_file_output = false
+functions_per_output_file = 50
+uses_mips3_float_mode = false
+bss_section_suffix = ".bss"
+unpaired_lo16_warnings = false
+
+# =============================================================================
+# Patches
+# =============================================================================
+[patches]
+
+# Stub all libultra OS functions (0x8008C000+) and cache management functions.
+# These will be reimplemented by N64ModernRuntime (ultramodern).
+stubs = [
+    # Android 2026-10-21 (Claude): the libaudio synth group is un-stubbed (the game's sound manager built
+    # garbage lists without it and hung after the legal screen). Its handlers are split in symbols.toml.
+    # Android 2026-10-20 (Claude): removed from stubs because they are pure software the game uses:
+    #   func_80092B10 _Putfld, func_80096BF0 _Litob, func_80096E90 _Genld, func_80097400 _Ldtob,
+    #   func_80097E60 lldiv, func_80097F60 ldiv (printf internals: stubbed _Putfld made every %s print from NULL),
+    #   func_800879C4 (RDP setup display-list writer, tail of static_0_800879B8).
+    # func_80097F68 was really ldiv (0x80097F60) + RSP boot code data (0x80097FF0); see symbols.toml.
+    "static_0_80087CC0",
+    "cache_inval_80088AD0",
+    # osViSetEvent at 0x8008C090: renamed and handled by N64Recomp reimplemented_funcs
+    # func_8008C100 split: dispatch portion still stubbed (COP0 instructions)
+    "func_8008C100_dispatch",
+    # osGetTime/osSetCompare COP0 helpers after osGetCount (0x8008C550)
+    "func_8008C560",
+    "func_8008C190",
+    "func_8008C280",
+    # func_8008C390 split: tail portion still stubbed
+    "func_8008C390_tail",
+    # osRecvMesg, osSendMesg, osGetCount: handled by N64Recomp reimplemented_funcs
+    "func_8008C770",
+    "func_8008C7B0",
+    # func_8008C930 split: exception handler still stubbed
+    "func_8008C930_exception",
+    # __osDisableInt, __osRestoreInt: handled by N64Recomp reimplemented_funcs
+    "func_8008CAC8",
+    "func_8008D42C",
+    # osViSetMode: handled by N64Recomp reimplemented_funcs
+    # func_8008E9F4 split: stub portion
+    # osSetEventMesg at 0x8008AE30: handled by N64Recomp reimplemented_funcs (game's custom version)
+    # osSetEventMesg_unused_8008EA04: dead standard libultra copy (zero callers)
+    # osSetIntMask: handled by N64Recomp reimplemented_funcs
+    # osAiSetFrequency, osAiSetNextBuffer: handled by N64Recomp reimplemented_funcs
+    "func_800905A0",
+    "func_800905F8",
+    "func_80090634",
+    "func_80090660",
+    # osSetTimer at 0x800906F0: handled by N64Recomp reimplemented_funcs
+    # __osSiRawStartDma at 0x800907D0: handled by N64Recomp reimplemented_funcs
+    "func_80090880",
+    "func_80090960",
+    "func_80090A10",
+    "func_80090C20",
+    "func_80090F70",
+    "func_800910D4",
+    "func_80091280",
+    "func_80091354",
+    "func_80091E34",
+    "func_80091FD0",
+    "func_80092050",
+    "func_80092560",
+    "func_800926A0",
+    "func_800928F0",
+    "pi_create_access_queue",
+    "pi_rel_access",
+    "pi_read_io",
+    "osWritebackDCache_80093898",
+    "osSp_small",
+    "osSpTask_candidate",
+    "func_80093A68",
+    "os_set_cause",
+    "__osSetCompare_80093C80",
+    "func_80093E44",
+    "func_80093FB4",
+    "func_80094028",
+    # osCreateViManager, osCreatePiManager: handled by N64Recomp reimplemented_funcs
+    "osPiStartDma_candidate_800944E0",
+    "func_800947F0",
+    "func_80094C80",
+    "func_80094E44",
+    "func_80094ED0",
+    "func_80095048",
+    "func_800950F4",
+    "osPiManager_candidate_800952AC",
+    # osPiStartDma: handled by N64Recomp reimplemented_funcs
+    "func_800958DC",
+    "func_80095990",
+    "func_80096790",
+    "func_80096930",
+    "func_80096A08",
+    "osPiRaw_io",
+    "pi_raw_start_dma",
+    "osPiManager_candidate_800979F8",
+    "osPiManager_candidate_80097B88",
+    "func_80097D20",
+    "func_80097D70",
+    "func_80097DC0",
+    "rspdata_80097FF0",
+    "libultra_split_8008D12C",
+    "libultra_split_8008D284",
+    "libultra_split_8008D450",
+    "libultra_split_80093900",
+    "libultra_split_80093CD0",
+    "libultra_split_80093D50",
+]

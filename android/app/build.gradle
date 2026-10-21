@@ -1,0 +1,93 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.sp00nznet.swep1racer'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.sp00nznet.swep1racer'
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+
+        externalNativeBuild {
+            cmake {
+                // Android 2026-10-21 (Claude): native build type RelWithDebInfo (-O2, NDEBUG, symbols kept). The Mali
+                // shader-compiler crashes blamed on -O2 were really the 16K-EEPROM save overflowing the native heap
+                // (fixed in librecomp pi.cpp + main.cpp save_type). Debug (-O0) is 10x+ slower. (Last -D wins.)
+                arguments '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
+                          '-DANDROID_PLATFORM=android-24',
+                          '-DANDROID_STL=c++_shared',
+                          '-DZSTD_BUILD_PROGRAMS=OFF',
+                          '-DZSTD_BUILD_TESTS=OFF',
+                          '-DZSTD_BUILD_DICTBUILDER=OFF'
+                cppFlags '-std=c++20 -fno-strict-aliasing -DNDEBUG'
+                cFlags '-DNDEBUG'
+            }
+        }
+    }
+
+    ndkVersion '28.2.13676358'
+
+    externalNativeBuild {
+        cmake {
+            path file('../../CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+
+    sourceSets {
+        main.java.srcDirs += file('../../lib/SDL2/android-project/app/src/main/java')
+    }
+
+    packaging {
+        jniLibs.useLegacyPackaging = true
+    }
+}
+
+def hostShaderToolsDir = layout.buildDirectory.dir('host-tools-win').get().asFile
+def hostFileToC = new File(hostShaderToolsDir, 'file_to_c.exe')
+def sdkCmakeDir = new File(System.getenv('ANDROID_HOME') ?: '', 'cmake/3.22.1/bin')
+def sdkCmake = new File(sdkCmakeDir, 'cmake.exe')
+def sdkNinja = new File(sdkCmakeDir, 'ninja.exe')
+def hostLlvmBin = new File(System.getenv('RECOMP_HOST_LLVM') ?: 'J:/recomp-backups/tools-cache/llvm-mingw/bin')
+
+tasks.register('buildHostShaderTools') {
+    group = 'build setup'
+    description = 'Build RT64 shader embedding helper for the Windows host.'
+    outputs.file(hostFileToC)
+    doLast {
+        if (!hostFileToC.isFile()) {
+            exec {
+                commandLine sdkCmake.absolutePath,
+                        '-S', file('../../lib/rt64/src/tools/file_to_c').absolutePath,
+                        '-B', hostShaderToolsDir.absolutePath,
+                        '-G', 'Ninja',
+                        '-DCMAKE_MAKE_PROGRAM=' + sdkNinja.absolutePath.replace('\\', '/'),
+                        '-DCMAKE_C_COMPILER=' + new File(hostLlvmBin, 'clang.exe').absolutePath.replace('\\', '/'),
+                        '-DCMAKE_CXX_COMPILER=' + new File(hostLlvmBin, 'clang++.exe').absolutePath.replace('\\', '/'),
+                        '-DCMAKE_BUILD_TYPE=Release',
+                        '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=' + hostShaderToolsDir.absolutePath
+            }
+            exec {
+                commandLine sdkCmake.absolutePath,
+                        '--build', hostShaderToolsDir.absolutePath,
+                        '--target', 'file_to_c'
+            }
+        }
+        if (!hostFileToC.isFile()) {
+            throw new GradleException("Host shader tool was not created at ${hostFileToC}")
+        }
+    }
+}
+
+tasks.matching { it.name.startsWith('configureCMake') }.configureEach {
+    dependsOn tasks.named('buildHostShaderTools')
+}

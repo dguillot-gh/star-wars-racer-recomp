@@ -1,0 +1,11 @@
+[submodule "lib/N64ModernRuntime"]
+	path = lib/N64ModernRuntime
+	url = https://github.com/dguillot-gh/N64ModernRuntime.git
+	branch = racer-android
+[submodule "lib/rt64"]
+	path = lib/rt64
+	url = https://github.com/dguillot-gh/rt64.git
+	branch = racer-android
+[submodule "lib/SDL2"]
+	path = lib/SDL2
+	url = https://github.com/libsdl-org/SDL.git
