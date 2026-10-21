@@ -5,6 +5,8 @@
         android:memtagMode="sync"
         android:hasCode="true"
         android:label="Star Wars Episode I: Racer"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <!-- Start screen: pick the ROM, then Play (2026-10-21). -->
         <activity
