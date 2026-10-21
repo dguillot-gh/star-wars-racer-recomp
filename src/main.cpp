@@ -419,6 +419,14 @@ bool get_input(int controller_num, uint16_t* buttons, float* x, float* y) {
 
     *x = std::clamp(*x, -1.0f, 1.0f);
     *y = std::clamp(*y, -1.0f, 1.0f);
+
+    // 2026-10-21 (Claude): log every change of the pressed buttons the game reads (grep "[pad]"), to check that each
+    // on-screen / gamepad button reaches the game.
+    static uint16_t s_last_buttons = 0;
+    if (*buttons != s_last_buttons) {
+        printf("[pad] buttons 0x%04X (was 0x%04X)\n", *buttons, s_last_buttons);
+        s_last_buttons = *buttons;
+    }
     return true;
 }
 
