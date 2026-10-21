@@ -96,6 +96,10 @@ Each fix: symptom -> cause -> change (files).
     again (`lib/rt64/src/render/rt64_raster_shader.cpp`; `debug.swe1r.serialpipe=1` restores the lock): first frame
     in 14-18 s instead of 25 s, 4 cold boots without a crash.
 
+24. **Garbage at the picture edges** (Claude, 2026-10-21). Racer draws and clears only inside its scissor
+    (x 8..312, y 16..464); the border is TV overscan on hardware and kept stale pixels: small blocks at the corners
+    in 4:3, wide coloured strips in widescreen. -> `lib/rt64/src/hle/rt64_vi.cpp` crops the VI picture to that area.
+
 ## Build notes
 
 - Native build type RelWithDebInfo (`android/app/build.gradle`); Debug (-O0) builds hid the heap corruption.

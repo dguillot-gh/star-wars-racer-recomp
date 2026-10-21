@@ -46,7 +46,10 @@ public final class TouchPadView extends View {
     private final Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Handler handler = new Handler(Looper.getMainLooper());
 
-    private boolean visible = true;
+    private boolean visible = true;           // pad shown (the menu's "Show the pad")
+    private Runnable onMenu;                  // the top-centre menu button
+    private float opacity = 1f, sizeScale = 1f;
+    private boolean boostEnabled = true;
     private int stickPointerId = -1;
     private float stickX = 0f, stickY = 0f;   // -1..1, y up = +1
     private int buttons = 0;                  // buttons under the fingers
@@ -71,6 +74,23 @@ public final class TouchPadView extends View {
         setFocusable(false);
     }
 
+    // ---- set by the side menu (RacerMenu) ----
+    void setOnMenu(Runnable r) { onMenu = r; }
+    void setPadVisible(boolean on) { releaseAll(); visible = on; invalidate(); }
+    void setOpacity(float a) { opacity = a; invalidate(); }
+    void setSizeScale(float sc) { sizeScale = sc; invalidate(); }
+    void setBoostEnabled(boolean on) { releaseAll(); boostEnabled = on; invalidate(); }
+
+    /** Lets go of everything (menu opened, pad hidden): the game sees no button and a centred stick. */
+    void releaseAll() {
+        stickPointerId = -1;
+        buttons = 0; stickX = 0f; stickY = 0f;
+        boostHeld = false; boostGap = false; boostGraceUntil = 0;
+        handler.removeCallbacksAndMessages(null);
+        send();
+        invalidate();
+    }
+
     private float w() { return getWidth(); }
     private float h() { return getHeight(); }
 
@@ -85,17 +105,14 @@ public final class TouchPadView extends View {
         int actionIndex = e.getActionIndex();
         float hh = h();
 
-        // Toggle button: on a fresh finger down inside it
+        // Menu button: on a fresh finger down inside it
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
             float x = e.getX(actionIndex), y = e.getY(actionIndex);
             if (inside(x, y, TOGGLE_X * w(), TOGGLE_Y * hh, TOGGLE_R * hh * 1.4f)) {
-                visible = !visible;
-                stickPointerId = -1;
-                buttons = 0; stickX = 0f; stickY = 0f;
-                boostHeld = false; boostGap = false; boostGraceUntil = 0;
-                handler.removeCallbacksAndMessages(null);
-                send();
-                invalidate();
+                releaseAll();
+                if (onMenu != null) {
+                    onMenu.run();
+                }
                 return true;
             }
         }
@@ -106,7 +123,7 @@ public final class TouchPadView extends View {
         // Stick capture / release
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
             float x = e.getX(actionIndex), y = e.getY(actionIndex);
-            if (stickPointerId == -1 && inside(x, y, STICK_X * w(), STICK_Y * hh, STICK_R * hh * 1.6f)) {
+            if (stickPointerId == -1 && inside(x, y, STICK_X * w(), STICK_Y * hh, STICK_R * sizeScale * hh * 1.6f)) {
                 stickPointerId = e.getPointerId(actionIndex);
             }
         }
@@ -130,7 +147,7 @@ public final class TouchPadView extends View {
             float x = e.getX(i), y = e.getY(i);
             int id = e.getPointerId(i);
             if (id == stickPointerId) {
-                float r = STICK_R * hh;
+                float r = STICK_R * sizeScale * hh;
                 float dx = (x - STICK_X * w()) / r;
                 float dy = (STICK_Y * hh - y) / r;
                 float len = (float) Math.sqrt(dx * dx + dy * dy);
@@ -139,11 +156,11 @@ public final class TouchPadView extends View {
                 continue;
             }
             for (int b = 0; b < BITS.length; b++) {
-                if (inside(x, y, BX[b] * w(), BY[b] * hh, BR[b] * hh * 1.25f)) {
+                if (inside(x, y, BX[b] * w(), BY[b] * hh, BR[b] * sizeScale * hh * 1.25f)) {
                     newButtons |= BITS[b];
                 }
             }
-            if (inside(x, y, BOOST_X * w(), BOOST_Y * hh, BOOST_R * hh * 1.25f)) {
+            if (boostEnabled && inside(x, y, BOOST_X * w(), BOOST_Y * hh, BOOST_R * sizeScale * hh * 1.25f)) {
                 newBoost = true;
             }
         }
@@ -216,12 +233,15 @@ public final class TouchPadView extends View {
         fill.setColor(0x55000000);
         c.drawCircle(TOGGLE_X * w(), TOGGLE_Y * hh, TOGGLE_R * hh, fill);
         c.drawCircle(TOGGLE_X * w(), TOGGLE_Y * hh, TOGGLE_R * hh, stroke);
-        c.drawText(visible ? "hide" : "pad", TOGGLE_X * w(), TOGGLE_Y * hh + hh * 0.012f, text);
+        text.setTextSize(hh * 0.05f);
+        c.drawText("≡", TOGGLE_X * w(), TOGGLE_Y * hh + hh * 0.017f, text);
+        text.setTextSize(hh * 0.035f);
         if (!visible) {
             return;
         }
+        final int layer = c.saveLayerAlpha(0, 0, w(), hh, Math.round(255 * opacity));
         // stick
-        float r = STICK_R * hh;
+        float r = STICK_R * sizeScale * hh;
         fill.setColor(0x33FFFFFF);
         c.drawCircle(STICK_X * w(), STICK_Y * hh, r, fill);
         c.drawCircle(STICK_X * w(), STICK_Y * hh, r, stroke);
@@ -232,15 +252,18 @@ public final class TouchPadView extends View {
         for (int b = 0; b < BITS.length; b++) {
             boolean down = (shownButtons & BITS[b]) != 0;
             fill.setColor(down ? 0xAAFFFFFF : 0x44FFFFFF);
-            c.drawCircle(BX[b] * w(), BY[b] * hh, BR[b] * hh, fill);
-            c.drawCircle(BX[b] * w(), BY[b] * hh, BR[b] * hh, stroke);
+            c.drawCircle(BX[b] * w(), BY[b] * hh, BR[b] * sizeScale * hh, fill);
+            c.drawCircle(BX[b] * w(), BY[b] * hh, BR[b] * sizeScale * hh, stroke);
             c.drawText(LABEL[b], BX[b] * w(), BY[b] * hh + hh * 0.012f, text);
         }
         // BOOST: orange tint so it stands out from the N64 buttons
-        fill.setColor(boostHeld ? 0xCCFF8A2A : 0x66FF8A2A);
-        c.drawCircle(BOOST_X * w(), BOOST_Y * hh, BOOST_R * hh, fill);
-        c.drawCircle(BOOST_X * w(), BOOST_Y * hh, BOOST_R * hh, stroke);
-        text.setTextSize(hh * 0.026f);
-        c.drawText("BOOST", BOOST_X * w(), BOOST_Y * hh + hh * 0.009f, text);
+        if (boostEnabled) {
+            fill.setColor(boostHeld ? 0xCCFF8A2A : 0x66FF8A2A);
+            c.drawCircle(BOOST_X * w(), BOOST_Y * hh, BOOST_R * sizeScale * hh, fill);
+            c.drawCircle(BOOST_X * w(), BOOST_Y * hh, BOOST_R * sizeScale * hh, stroke);
+            text.setTextSize(hh * 0.026f * sizeScale);
+            c.drawText("BOOST", BOOST_X * w(), BOOST_Y * hh + hh * 0.009f, text);
+        }
+        c.restoreToCount(layer);
     }
 }

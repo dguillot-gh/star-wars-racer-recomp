@@ -36,6 +36,37 @@ static void dummy_check_interrupts() {
     // No-op: ultramodern handles interrupts
 }
 
+// 2026-10-21 (Claude): picture settings from the side menu (RacerMenu.java), set through JNI from the UI thread and
+// applied on RT64's thread at the next update_screen. -1 = not set yet (keep rt64.json's value).
+//   aspect: 0 = 4:3, 1 = 16:9, 2 = 21:9 (fitted to the screen width: letterboxed on a 20:9 phone);  filter: 0 = sharp, 1 = smooth;
+//   resolution: 0 = 1x (N64), 1 = 2x, 2 = 3x, 3 = fit the screen (whole multiple).
+#include <atomic>
+static std::atomic<int> g_video_aspect{ -1 }, g_video_filter{ -1 }, g_video_resolution{ -1 };
+static std::atomic<bool> g_video_dirty{ false };
+static std::atomic<float> g_game_fps{ 0.0f };   // frames the game finished per second (VI origin changes)
+static std::atomic<float> g_dl_rate{ 0.0f };    // display lists (graphics tasks) per second
+
+#if defined(__ANDROID__)
+#include <jni.h>
+extern "C" JNIEXPORT void JNICALL
+Java_com_sp00nznet_swep1racer_SWE1RacerActivity_nativeSetVideo(JNIEnv*, jclass, jint aspect, jint filter, jint resolution) {
+    g_video_aspect.store(aspect);
+    g_video_filter.store(filter);
+    g_video_resolution.store(resolution);
+    g_video_dirty.store(true);
+}
+
+extern "C" JNIEXPORT jfloat JNICALL
+Java_com_sp00nznet_swep1racer_SWE1RacerActivity_nativeGameFps(JNIEnv*, jclass) {
+    return g_game_fps.load();
+}
+
+extern "C" JNIEXPORT jfloat JNICALL
+Java_com_sp00nznet_swep1racer_SWE1RacerActivity_nativeDisplayListRate(JNIEnv*, jclass) {
+    return g_dl_rate.load();
+}
+#endif
+
 class SWE1RRenderContext : public ultramodern::renderer::RendererContext {
 public:
     SWE1RRenderContext(uint8_t* rdram, ultramodern::renderer::WindowHandle window_handle, bool developer_mode)
@@ -245,7 +276,59 @@ public:
                    vi_regs_->VI_H_START_REG, vi_regs_->VI_V_START_REG, vi_regs_->VI_X_SCALE_REG, vi_regs_->VI_Y_SCALE_REG);
         }
 
+        if (g_video_dirty.exchange(false)) {
+            apply_video_settings();
+        }
+
+        // Game frame rate: a finished frame moves the VI origin to another framebuffer.
+        {
+            const uint32_t origin = vi_regs_->VI_ORIGIN_REG;
+            if (origin != last_origin_) {
+                last_origin_ = origin;
+                fps_frames_++;
+            }
+            const uint64_t now = SDL_GetTicks64();
+            if (now - fps_window_start_ >= 1000) {
+                const float seconds = float(now - fps_window_start_) / 1000.0f;
+                g_game_fps.store(fps_frames_ / seconds);
+                g_dl_rate.store((dl_count_ - fps_dl_start_) / seconds);
+                fps_frames_ = 0;
+                fps_dl_start_ = dl_count_;
+                fps_window_start_ = now;
+            }
+        }
+
         app_->updateScreen();
+    }
+
+    // Side-menu picture settings into RT64's user configuration (runs on the thread that calls update_screen).
+    void apply_video_settings() {
+        RT64::UserConfiguration& cfg = app_->userConfig;
+        int aspect = g_video_aspect.load();
+        const int filter = g_video_filter.load(), resolution = g_video_resolution.load();
+        if (aspect == 0) {
+            cfg.aspectRatio = RT64::UserConfiguration::AspectRatio::Original;
+        } else if (aspect >= 1) {
+            static const double targets[] = { 0.0, 16.0 / 9.0, 21.0 / 9.0 };
+            aspect = (aspect > 2) ? 2 : aspect;
+            cfg.aspectRatio = RT64::UserConfiguration::AspectRatio::Manual;
+            cfg.aspectTarget = targets[aspect];
+        }
+        if (filter == 0) {
+            cfg.filtering = RT64::UserConfiguration::Filtering::Nearest;
+        } else if (filter == 1) {
+            cfg.filtering = RT64::UserConfiguration::Filtering::AntiAliasedPixelScaling;
+        }
+        if (resolution == 0) {
+            cfg.resolution = RT64::UserConfiguration::Resolution::Original;
+        } else if (resolution == 1 || resolution == 2) {
+            cfg.resolution = RT64::UserConfiguration::Resolution::Manual;
+            cfg.resolutionMultiplier = (resolution == 1) ? 2.0 : 3.0;
+        } else if (resolution == 3) {
+            cfg.resolution = RT64::UserConfiguration::Resolution::WindowIntegerScale;
+        }
+        printf("[SWE1R] video settings: aspect %d, filter %d, resolution %d\n", aspect, filter, resolution);
+        app_->updateUserConfig(true);
     }
 
     void shutdown() override {
@@ -274,6 +357,10 @@ private:
     std::vector<uint8_t> rom_header_;
     uint32_t dl_count_ = 0;
     uint32_t screen_count_ = 0;
+    uint32_t last_origin_ = 0;        // FPS counter (update_screen)
+    uint32_t fps_frames_ = 0;
+    uint32_t fps_dl_start_ = 0;       // dl_count_ at the start of the window
+    uint64_t fps_window_start_ = 0;
 };
 
 // Factory function

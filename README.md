@@ -29,7 +29,8 @@ pad, in 4:3, with sound, and the progress saves and loads again after the app is
 | Saves (16 Kbit EEPROM) | works: Tournament progress survives closing the app |
 | Home / app switch / screen lock | works: the game resumes where it was; landscape only |
 | Start screen (ROM picker, Play) | works |
-| Side menu, pad editor, picture options | planned |
+| Side menu: aspect 4:3 / 16:9 / 21:9 (true widescreen), sharp / smooth, resolution, FPS counter, pad options | works (HUD stretches in widescreen) |
+| Pad editor, save states, widescreen HUD | planned |
 
 Every fix it took is listed with its cause in [docs/ANDROID-FIXES.md](docs/ANDROID-FIXES.md).
 
