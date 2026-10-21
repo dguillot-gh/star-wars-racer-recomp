@@ -376,6 +376,26 @@ Java_com_sp00nznet_swep1racer_SWE1RacerActivity_nativeSetTouchPad(JNIEnv*, jclas
     g_touch_x.store((float)x);
     g_touch_y.store((float)y);
 }
+
+// 2026-10-21 (Claude): the local player's boost state, for the pad's BOOST button (fires the moment it is ready).
+// Racer keeps a per-racer record array at 0x80118F90 (0x88 bytes each); record 0 is local player 1 when its tag at
+// +4 is 'Locl', and +0x84 points to the racer object ('Test', same layout as the PC version). In that object
+// +0x210 is the boost status: 0 not ready, 1 charging, 2 ready (written only by the boost-charge code, func_8006E454).
+// Returns -1 when there is no local racer (menus, attract demo) or a pointer looks wrong.
+extern "C" JNIEXPORT jint JNICALL
+Java_com_sp00nznet_swep1racer_SWE1RacerActivity_nativeBoostState(JNIEnv*, jclass) {
+    uint8_t* const rdram = g_rdram_base;
+    if (rdram == nullptr) return -1;
+    auto read32 = [rdram](uint32_t addr) -> uint32_t {
+        return *(volatile uint32_t*)(rdram + (addr - 0x80000000u));
+    };
+    if (read32(0x80118F94) != 0x4C6F636Cu) return -1;            // 'Locl'
+    const uint32_t obj = read32(0x80119014);
+    if (obj < 0x80000400u || obj > 0x807FF000u || (obj & 3) != 0) return -1;
+    if (read32(obj) != 0x54657374u) return -1;                    // 'Test'
+    const uint32_t status = read32(obj + 0x210);
+    return (status <= 2) ? (jint)status : -1;
+}
 #endif
 
 bool get_input(int controller_num, uint16_t* buttons, float* x, float* y) {

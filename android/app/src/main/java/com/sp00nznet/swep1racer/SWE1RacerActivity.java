@@ -36,6 +36,7 @@ public final class SWE1RacerActivity extends SDLActivity {
     static native void nativeSetVideo(int aspect, int filter, int resolution);
     static native float nativeGameFps();
     static native float nativeDisplayListRate();
+    static native int nativeBoostState();      // 0 not ready, 1 charging, 2 ready, -1 no local racer
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
@@ -75,6 +76,7 @@ public final class SWE1RacerActivity extends SDLActivity {
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             menu = new RacerMenu(this, pad, prefs);
             pad.setOnMenu(menu::open);
+            pad.loadLayout(prefs);
             pad.setPadVisible(prefs.getBoolean(RacerMenu.PAD, true));
             pad.setBoostEnabled(prefs.getBoolean(RacerMenu.BOOST, true));
             pad.setOpacity(RacerMenu.OPACITIES[clamp(prefs.getInt(RacerMenu.OPACITY, RacerMenu.DEF_OPACITY),
@@ -147,7 +149,9 @@ public final class SWE1RacerActivity extends SDLActivity {
 
     @Override
     public void onBackPressed() {
-        if (menu != null && menu.isOpen()) {
+        if (pad != null && pad.isEditing()) {
+            pad.stopEditing();  // Back ends moving / resizing controls (the layout is saved)
+        } else if (menu != null && menu.isOpen()) {
             menu.close();       // Back closes the menu first
         } else {
             askQuit();

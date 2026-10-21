@@ -144,6 +144,10 @@ final class RacerMenu {
                     prefs.edit().putBoolean(BOOST, on).apply();
                     pad.setBoostEnabled(on);
                 });
+        row(list, "Move and resize controls", () -> {
+            close();
+            pad.startEditing();
+        });
         final int opacity = Math.max(0, Math.min(OPACITIES.length - 1, prefs.getInt(OPACITY, DEF_OPACITY)));
         row(list, "Opacity: " + OPACITIES[opacity] + "%", () -> {
             final int next = (opacity + 1) % OPACITIES.length;
@@ -152,7 +156,7 @@ final class RacerMenu {
             refresh();
         });
         final int size = Math.max(0, Math.min(SIZES.length - 1, prefs.getInt(SIZE, DEF_SIZE)));
-        row(list, "Size: " + SIZE_NAMES[size], () -> {
+        row(list, "Size (all controls): " + SIZE_NAMES[size], () -> {
             final int next = (size + 1) % SIZES.length;
             prefs.edit().putInt(SIZE, next).apply();
             pad.setSizeScale(SIZES[next]);

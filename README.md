@@ -82,6 +82,12 @@ first time. Nothing is uploaded, installed system-wide, or left running.
   `src/rt64_render_context.cpp` hands display lists to RT64.
 - `android/` is the Gradle app: an SDL2 activity, the ROM picker and the touch pad.
 
+## Made with AI assistance
+
+This port was built with AI help: the project owner worked with Qwen (a local model) and Claude (Anthropic), which found and wrote most of the fixes. Each fix in
+[docs/ANDROID-FIXES.md](docs/ANDROID-FIXES.md) says who found it. Everything was tested on a real phone, but expect
+rough edges, and please report what you find.
+
 ## Credits and licence
 
 - **[sp00nznet/racer](https://github.com/sp00nznet/racer)** by sp00nznet: the original N64Recomp project for this game.

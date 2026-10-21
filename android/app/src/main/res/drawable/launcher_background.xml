@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Start-screen art (2026-10-21): an original dusk desert with two suns and a podracer, drawn for this port (no game
+     art). 240x108 (the phone's 20:9 shape); shown centre-cropped behind the launcher, so the middle stays dark for
+     the title and buttons. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="480dp"
+    android:height="216dp"
+    android:viewportWidth="240"
+    android:viewportHeight="108">
+
+    <!-- sky: the app's dark background at the top, dusk purple at the horizon -->
+    <path android:pathData="M0,0 L240,0 L240,108 L0,108 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="78"
+                android:startColor="#FF101014" android:centerColor="#FF17152A" android:endColor="#FF3A2440" />
+        </aapt:attr>
+    </path>
+
+    <!-- two suns setting, with a soft glow -->
+    <path android:fillColor="#22FFB86B" android:pathData="M164,68 A16,16 0 1,1 196,68 A16,16 0 1,1 164,68 Z" />
+    <path android:fillColor="#FFFFB86B" android:pathData="M173,68 A7,7 0 1,1 187,68 A7,7 0 1,1 173,68 Z" />
+    <path android:fillColor="#FFFFD9A0" android:pathData="M190,71.5 A4.5,4.5 0 1,1 199,71.5 A4.5,4.5 0 1,1 190,71.5 Z" />
+
+    <!-- distant mesas on the horizon -->
+    <path android:fillColor="#FF241C30"
+        android:pathData="M0,76 L18,76 L22,70 L38,70 L41,76 L120,76 L124,72 L132,72 L135,76 L200,76 L205,69 L214,69 L217,76 L240,76 L240,80 L0,80 Z" />
+
+    <!-- dunes, far and near -->
+    <path android:fillColor="#FF3A2A33"
+        android:pathData="M0,80 Q40,73 80,79 T160,78 T240,77 L240,108 L0,108 Z" />
+    <path android:fillColor="#FF4A3330"
+        android:pathData="M0,92 Q50,82 110,90 T240,88 L240,108 L0,108 Z" />
+
+    <!-- speed lines behind the podracer -->
+    <path android:strokeColor="#998AB4FF" android:strokeWidth="0.6" android:strokeLineCap="round" android:pathData="M8,84 L44,84" />
+    <path android:strokeColor="#668AB4FF" android:strokeWidth="0.6" android:strokeLineCap="round" android:pathData="M16,87.5 L46,87.5" />
+    <path android:strokeColor="#448AB4FF" android:strokeWidth="0.6" android:strokeLineCap="round" android:pathData="M4,81 L36,81" />
+
+    <!-- the podracer, flying right: two engines in front, cables, cockpit behind -->
+    <path android:fillColor="#FFFF8A2A" android:pathData="M47,82.2 L42,83.1 L47,84 Z" />
+    <path android:fillColor="#FFFF8A2A" android:pathData="M47,85.6 L42,86.5 L47,87.4 Z" />
+    <path android:fillColor="#FFD8DCE6" android:pathData="M47,82 L60,82 A2.2,1.1 0 0,1 60,84.2 L47,84.2 Z" />
+    <path android:fillColor="#FFD8DCE6" android:pathData="M47,85.4 L60,85.4 A2.2,1.1 0 0,1 60,87.6 L47,87.6 Z" />
+    <path android:strokeColor="#FFE07AFF" android:strokeWidth="0.5" android:pathData="M58,84.2 L58.6,84.8 L57.8,85.4" />
+    <path android:strokeColor="#FF9090A0" android:strokeWidth="0.3" android:pathData="M48,83.1 L37,84.7 M48,86.5 L37,84.9" />
+    <path android:fillColor="#FF8AB4FF" android:pathData="M31,84 L37,83.6 L37,86 L31,85.6 Z" />
+</vector>

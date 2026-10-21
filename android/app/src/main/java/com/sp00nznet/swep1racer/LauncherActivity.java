@@ -12,6 +12,8 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -89,10 +91,17 @@ public final class LauncherActivity extends Activity {
         box.addView(hint, new LinearLayout.LayoutParams(dp(landscape ? 680 : 420), ViewGroup.LayoutParams.WRAP_CONTENT));
 
         final ScrollView scroll = new ScrollView(this);
-        scroll.setBackgroundColor(0xFF101014);
         scroll.setFillViewport(true);
         scroll.addView(box);
-        setContentView(scroll);
+        // The start-screen art (res/drawable/launcher_background.xml, an original drawing) fills the screen behind it.
+        final FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(0xFF101014);
+        final ImageView art = new ImageView(this);
+        art.setImageResource(R.drawable.launcher_background);
+        art.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        root.addView(art, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        root.addView(scroll, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(root);
         refresh();
     }
 
