@@ -55,3 +55,7 @@ qwen/logs/*.txt
 qwen/ghidra/racer_code.bin
 qwen/ghidra/proj/
 qwen/ghidra/out/
+
+# RSPRecomp output (made from the ROM) and local configs with ROM paths
+rsp/
+*.local.toml

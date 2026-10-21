@@ -208,15 +208,17 @@ static SDL_GameController* g_controller = nullptr;
 // RSP Callbacks
 // =============================================================================
 
-// No-op RSP microcode. We don't yet have SWE1R's recompiled audio microcode
-// (that would come from N64Recomp's RSPRecomp, like pokemonsnap's aspMain).
+// No-op RSP microcode for any task type we have no recompiled microcode for.
 // Returning nullptr makes ultramodern's run_task abort the whole process, so
-// instead we pretend audio tasks completed (RspExitReason::Broke). Result: no
-// sound yet, but the game proceeds — and graphics tasks (M_GFXTASK) never reach
-// here anyway; submit_rsp_task routes those straight to the RT64 renderer.
+// instead we pretend the task completed (RspExitReason::Broke). Graphics tasks
+// (M_GFXTASK) never reach here; submit_rsp_task routes those to RT64.
 static RspExitReason swe1r_noop_ucode(uint8_t* /*rdram*/, uint32_t /*ucode_addr*/) {
     return RspExitReason::Broke;
 }
+
+// RACER PATCH (2026-10-21, Claude): Racer's audio microcode (libultra aspMain, ROM 0x9A050), recompiled by RSPRecomp
+// from aspMain.toml into rsp/aspMain.cpp.
+RspExitReason aspMain(uint8_t* rdram, uint32_t ucode_addr);
 
 RspUcodeFunc* get_rsp_microcode(const OSTask* task) {
     static uint32_t rsp_call_count = 0;
@@ -226,7 +228,10 @@ RspUcodeFunc* get_rsp_microcode(const OSTask* task) {
                 rsp_call_count, task->t.type,
                 (uint32_t)task->t.ucode, (uint32_t)task->t.ucode_data);
     }
-    // Only non-graphics (audio) tasks reach here; no-op them for now.
+    // Only non-graphics tasks reach here. Racer has one audio microcode (task ucode 0x80099450).
+    if (task->t.type == M_AUDTASK) {
+        return aspMain;
+    }
     return swe1r_noop_ucode;
 }
 

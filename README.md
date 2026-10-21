@@ -16,7 +16,7 @@ reach the renderer" to a moving picture on a phone.
 ## Status
 
 Work in progress. On a Google Pixel 8 the game boots, shows the legal screen, the pit-droid intro, the SELECT PLAYER
-menu and the attract-mode race demo, in 4:3.
+menu and the attract-mode race demo, in 4:3, with sound.
 
 | Part | State |
 |---|---|
@@ -24,7 +24,7 @@ menu and the attract-mode race demo, in 4:3.
 | Picture (RT64 on Vulkan, Mali-G715) | works, 4:3; some textures look garbled; small garbage blocks below the picture corners |
 | ROM import (system file picker) | works |
 | On-screen touch pad, gamepad | implemented, not yet tested in the menus |
-| Sound | not yet: the audio microcode is not recompiled |
+| Sound (audio microcode recompiled with RSPRecomp) | works; not yet checked for crackle or drift over long play |
 | Saves (16 Kbit EEPROM) | implemented, not tested |
 | Launcher, side menu, pad editor | planned |
 
@@ -55,6 +55,8 @@ git clone --recursive https://github.com/dguillot-gh/star-wars-racer-recomp.git
 1. Copy `recomp.toml` to `recomp.local.toml` and set `rom_file_path` to your ROM.
 2. Recompile: run N64Recomp on `recomp.local.toml`, then `tools/fix_fallthroughs.py`, `tools/post_recomp_patches.py`
    and `tools/gen_lookup_table.py`. This writes `RecompiledFuncs/` (made from your ROM: never commit it).
+   For sound, copy `aspMain.toml` to `aspMain.local.toml`, set `rom_file_path`, and run `RSPRecomp` on it
+   (writes `rsp/aspMain.cpp`, also made from your ROM).
 3. Build the app: `gradle -p android :app:assembleDebug` (set `ANDROID_HOME`, `ANDROID_NDK_HOME` and `JAVA_HOME`
    first). The APK is `android/app/build/outputs/apk/debug/app-debug.apk`.
 4. Install it with `adb install -r`, start it, and pick your ROM when the file picker opens.

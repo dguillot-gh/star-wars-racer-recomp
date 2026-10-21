@@ -61,6 +61,12 @@ REDIRECTS = {
     # 0x141E200 read as 0 and every model/part load (func_800305F4) returned NULL -> black screen after the legal
     # screen and the 2 s NULL list scans ([bad-addr] 0x80000000). src/main.cpp reads the ROM word instead.
     "func_8008A710": "racer_osPiReadIo",
+    # Android 2026-10-21 (Claude): the game's AI copies write the audio-interface registers (0xA4500000), which the
+    # memory hook absorbs, so no buffer ever reached SDL. The runtime versions feed src/audio.cpp.
+    "func_8008815C": "osAiSetFrequency_recomp",       # DACRATE/BITRATE from a0 (Hz), returns the real rate
+    "func_800882B0": "osAiSetNextBuffer_recomp",      # AI_DRAM_ADDR = virt-to-phys(a0), AI_LEN = a1
+    "static_0_800883E0": "osAiGetLength_recomp",      # return AI_LEN
+    "static_0_8008ADA0": "osAiGetStatus_recomp",      # return AI_STATUS
 }
 
 def main():

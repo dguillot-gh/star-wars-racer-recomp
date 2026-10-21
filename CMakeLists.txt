@@ -77,6 +77,7 @@ set(SWE1RACER_HOST_SOURCES
     src/section_table.cpp
     src/rt64_render_context.cpp
     src/audio.cpp
+    rsp/aspMain.cpp     # RSPRecomp output from aspMain.toml (made from your ROM, not committed)
 )
 
 if (ANDROID)

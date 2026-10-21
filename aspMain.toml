@@ -1,0 +1,14 @@
+# RSPRecomp config for Racer's audio microcode (standard libultra aspMain, 16 commands).
+# Copy to aspMain.local.toml, set rom_file_path to your ROM, run RSPRecomp on it.
+# The output (rsp/aspMain.cpp) is made from the ROM: never commit it.
+text_offset = 0x9A050            # ROM offset of the task's ucode (RDRAM 0x80099450)
+text_size = 0xE20                # code ends at IMEM 0x1E98; data and an OSTask template follow
+text_address = 0x04001080
+rom_file_path = "baserom.z64"
+output_file_path = "rsp/aspMain.cpp"
+output_function_name = "aspMain"
+# Command jump table at the start of the task data (RDRAM 0x800AE5F0 + 0x10, 16 entries).
+extra_indirect_branch_targets = [
+    0x1118, 0x1470, 0x11DC, 0x1B38, 0x1214, 0x187C, 0x1254, 0x12D0,
+    0x12EC, 0x1328, 0x140C, 0x1294, 0x1E24, 0x138C, 0x170C, 0x144C,
+]

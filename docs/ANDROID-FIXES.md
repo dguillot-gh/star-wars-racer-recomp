@@ -62,8 +62,14 @@ Each fix: symptom -> cause -> change (files).
     the 320x476 framebuffer as if pixels were square. -> `lib/rt64/src/render/rt64_vi_renderer.cpp` sizes it by the
     VI width; `rt64_state.cpp` / `rt64_workload_queue.cpp` pass the same 4:3 ratio as the aspect source.
 
+18. **No sound** (Claude, 2026-10-21; first sound confirmed by ear on the Pixel 8). Two gaps: the audio RSP task ran
+    a no-op, and the game's own audio-interface functions wrote the AI registers (absorbed by the memory hook), so
+    no buffer reached SDL. -> the audio microcode (standard libultra aspMain, ROM 0x9A050, 0xE20 bytes, 16-command
+    jump table) is recompiled by RSPRecomp from `aspMain.toml` into `rsp/aspMain.cpp` and returned for `M_AUDTASK`
+    in `src/main.cpp`; redirects for osAiSetFrequency (func_8008815C), osAiSetNextBuffer (func_800882B0),
+    osAiGetLength (static_0_800883E0) and osAiGetStatus (static_0_8008ADA0) to the runtime.
+
 ## Build notes
 
 - Native build type RelWithDebInfo (`android/app/build.gradle`); Debug (-O0) builds hid the heap corruption.
 - `librecomp/src/overlays.cpp` get_function logs the caller and treats address 0 as a no-op (`[null-call]`).
-- Still open: sound (audio microcode is a no-op; needs RSPRecomp of aspMain, model: Goemon64Recomp-Android).
