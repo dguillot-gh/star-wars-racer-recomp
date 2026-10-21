@@ -263,8 +263,34 @@ ultramodern::gfx_callbacks_t::gfx_data_t create_gfx() {
     return nullptr;
 }
 
+#if defined(__ANDROID__)
+// RACER PATCH (2026-10-21, Claude): Home / app switch crashed the game: Android destroys the window surface and RT64's
+// present thread rebuilt the Vulkan surface from the missing native window (SIGSEGV in CreateAndroidSurfaceKHR, from
+// plume VulkanSwapChain::resize). plume skips the rebuild while it is told the surface is not ready; tell it from
+// SDL's background / foreground events. The watch runs on the thread that sends the event (SDL's Java thread),
+// so the flag flips as soon as Android pauses or resumes the app.
+extern "C" void plume_set_android_surface_ready(int ready);
+static int swe1r_app_event_watch(void*, SDL_Event* event) {
+    switch (event->type) {
+        case SDL_APP_WILLENTERBACKGROUND:
+            plume_set_android_surface_ready(0);
+            printf("[SWE1R] app to background: Vulkan surface paused\n");
+            break;
+        case SDL_APP_DIDENTERFOREGROUND:
+            plume_set_android_surface_ready(1);
+            printf("[SWE1R] app to foreground: Vulkan surface resumed\n");
+            break;
+    }
+    return 0;
+}
+#endif
+
 ultramodern::renderer::WindowHandle create_window(ultramodern::gfx_callbacks_t::gfx_data_t) {
 #if defined(__ANDROID__)
+    SDL_AddEventWatch(swe1r_app_event_watch, nullptr);
+    // 2026-10-21: landscape only (either way up). With a resizable window and no hint SDL lets Android rotate the
+    // game to portrait, which overrides the manifest's screenOrientation. Must be set before SDL_CreateWindow.
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
     const uint32_t window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN;
 #else
     const uint32_t window_flags = SDL_WINDOW_RESIZABLE;

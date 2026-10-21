@@ -27,6 +27,7 @@ pad, in 4:3, with sound, and the progress saves and loads again after the app is
 | Gamepad | implemented, not tested |
 | Sound (audio microcode recompiled with RSPRecomp) | works; not yet checked for crackle or drift over long play |
 | Saves (16 Kbit EEPROM) | works: Tournament progress survives closing the app |
+| Home / app switch / screen lock | works: the game resumes where it was; landscape only |
 | Launcher, side menu, pad editor | planned |
 
 Every fix it took is listed with its cause in [docs/ANDROID-FIXES.md](docs/ANDROID-FIXES.md).

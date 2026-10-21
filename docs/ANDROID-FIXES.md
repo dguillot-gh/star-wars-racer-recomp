@@ -77,6 +77,19 @@ Each fix: symptom -> cause -> change (files).
     (`lib/rt64/src/hle/rt64_state.cpp`). Debug switches: `adb shell setprop debug.swe1r.rawtmem 0` (old decode path),
     `adb shell setprop debug.swe1r.uber 1` (ubershader only).
 
+20. **Crash on Home / switching apps** (Claude, 2026-10-21, found with an adb switch-away test). Android destroys the
+    window surface; RT64's present thread rebuilt the Vulkan surface from the missing native window (SIGSEGV in
+    `vkCreateAndroidSurfaceKHR` from plume `VulkanSwapChain::resize`). -> `src/main.cpp` tells plume on SDL's
+    background / foreground events (`plume_set_android_surface_ready`), and plume (`lib/rt64/src/contrib/plume`,
+    fork dguillot-gh/plume) skips the rebuild while SDL has no native window. Home, app switch and screen lock /
+    PIN unlock all resume the same process.
+21. **Noise on the screen while booting** (Claude, 2026-10-21; reported by the user). Fix 12 forced the picture on
+    even before the game had given the VI a framebuffer, so the first ~25 s showed RAM at address 0. ->
+    `ultramodern/src/events.cpp` forces it only after a framebuffer is set: black until the first logo.
+22. **Rotated to portrait** (user, 2026-10-21). SDL lets a resizable window rotate unless told otherwise, overriding
+    the manifest. -> `SDL_HINT_ORIENTATIONS` "LandscapeLeft LandscapeRight" in `src/main.cpp` and
+    `sensorLandscape` in the manifest.
+
 ## Build notes
 
 - Native build type RelWithDebInfo (`android/app/build.gradle`); Debug (-O0) builds hid the heap corruption.

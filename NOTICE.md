@@ -13,6 +13,7 @@ LucasArts, Disney or Nintendo.
 | `android/`, `include/recomp_hooks.h`, `cmake/`, `docs/ANDROID-FIXES.md`, the Android parts of the `src/` files | written for this port | MIT |
 | `lib/N64ModernRuntime` (with `N64Recomp` inside) | [N64ModernRuntime](https://github.com/N64Recomp/N64ModernRuntime) and [N64Recomp](https://github.com/N64Recomp/N64Recomp) by Mr-Wiseguy and contributors, through [AurelioB's Android fork](https://github.com/AurelioB/N64ModernRuntime); this port's patches on the `racer-android` branches of dguillot-gh/N64ModernRuntime and dguillot-gh/N64Recomp | MIT |
 | `lib/rt64` | [RT64](https://github.com/rt64/rt64) by DarioSamo and contributors, through [AurelioB's Android fork](https://github.com/AurelioB/rt64); this port's patches on the `racer-android` branch of dguillot-gh/rt64 | MIT |
+| `lib/rt64/src/contrib/plume` | [plume](https://github.com/renderbag/plume) (RT64's graphics layer), through [AurelioB's fork](https://github.com/AurelioB/plume); this port's patch on the `racer-android` branch of dguillot-gh/plume | MIT |
 | `lib/SDL2` | [SDL](https://libsdl.org) | zlib |
 
 Patterns followed, with no code copied unless noted: the per-task RSP reset in `send_dl` and the audio-microcode plan
