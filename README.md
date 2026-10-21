@@ -15,17 +15,18 @@ reach the renderer" to a moving picture on a phone.
 
 ## Status
 
-Work in progress. On a Google Pixel 8 the game boots, shows the legal screen, the pit-droid intro, the SELECT PLAYER
-menu and the attract-mode race demo, in 4:3, with sound.
+Work in progress, but playable. On a Google Pixel 8 a full Tournament race plays start to finish with the touch
+pad, in 4:3, with sound, and the progress saves and loads again after the app is closed.
 
 | Part | State |
 |---|---|
 | Boot, game loop, asset loading | works |
 | Picture (RT64 on Vulkan, Mali-G715) | works, 4:3, textures correct; small garbage blocks below the picture corners |
 | ROM import (system file picker) | works |
-| On-screen touch pad, gamepad | implemented, not yet tested in the menus |
+| On-screen touch pad | works (menus and a full race) |
+| Gamepad | implemented, not tested |
 | Sound (audio microcode recompiled with RSPRecomp) | works; not yet checked for crackle or drift over long play |
-| Saves (16 Kbit EEPROM) | implemented, not tested |
+| Saves (16 Kbit EEPROM) | works: Tournament progress survives closing the app |
 | Launcher, side menu, pad editor | planned |
 
 Every fix it took is listed with its cause in [docs/ANDROID-FIXES.md](docs/ANDROID-FIXES.md).
