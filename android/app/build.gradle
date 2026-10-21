@@ -54,10 +54,14 @@ android {
 
 def hostShaderToolsDir = layout.buildDirectory.dir('host-tools-win').get().asFile
 def hostFileToC = new File(hostShaderToolsDir, 'file_to_c.exe')
-def sdkCmakeDir = new File(System.getenv('ANDROID_HOME') ?: '', 'cmake/3.22.1/bin')
+// The SDK's own CMake 3.22.1 (ANDROID_HOME, or sdk.dir in local.properties as Android Studio writes it).
+def sdkCmakeDir = new File(android.sdkDirectory, 'cmake/3.22.1/bin')
 def sdkCmake = new File(sdkCmakeDir, 'cmake.exe')
 def sdkNinja = new File(sdkCmakeDir, 'ninja.exe')
-def hostLlvmBin = new File(System.getenv('RECOMP_HOST_LLVM') ?: 'J:/recomp-backups/tools-cache/llvm-mingw/bin')
+// Host clang for the helper: RECOMP_HOST_LLVM (the bin folder of LLVM-MinGW), else clang / clang++ from PATH.
+def hostLlvm = System.getenv('RECOMP_HOST_LLVM')
+def hostCc = hostLlvm ? new File(hostLlvm, 'clang.exe').absolutePath.replace('\\', '/') : 'clang'
+def hostCxx = hostLlvm ? new File(hostLlvm, 'clang++.exe').absolutePath.replace('\\', '/') : 'clang++'
 
 tasks.register('buildHostShaderTools') {
     group = 'build setup'
@@ -71,8 +75,8 @@ tasks.register('buildHostShaderTools') {
                         '-B', hostShaderToolsDir.absolutePath,
                         '-G', 'Ninja',
                         '-DCMAKE_MAKE_PROGRAM=' + sdkNinja.absolutePath.replace('\\', '/'),
-                        '-DCMAKE_C_COMPILER=' + new File(hostLlvmBin, 'clang.exe').absolutePath.replace('\\', '/'),
-                        '-DCMAKE_CXX_COMPILER=' + new File(hostLlvmBin, 'clang++.exe').absolutePath.replace('\\', '/'),
+                        '-DCMAKE_C_COMPILER=' + hostCc,
+                        '-DCMAKE_CXX_COMPILER=' + hostCxx,
                         '-DCMAKE_BUILD_TYPE=Release',
                         '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=' + hostShaderToolsDir.absolutePath
             }
