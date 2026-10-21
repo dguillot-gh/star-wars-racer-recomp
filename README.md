@@ -16,23 +16,48 @@ reach the renderer" to a moving picture on a phone.
 ## Status
 
 Work in progress, but playable. On a Google Pixel 8 a full Tournament race plays start to finish with the touch
-pad, in 4:3, with sound, and the progress saves and loads again after the app is closed.
+pad, in 4:3, 16:9 or 21:9, with sound, and the progress saves and loads again after the app is closed.
 
 | Part | State |
 |---|---|
 | Boot, game loop, asset loading | works |
-| Picture (RT64 on Vulkan, Mali-G715) | works, 4:3, textures correct; small garbage blocks below the picture corners |
+| Picture (RT64 on Vulkan, Mali-G715) | works: textures correct, true widescreen; 50-60 fps (1x holds ~60, 3x at 21:9 ~50 on a warm phone) |
 | ROM import (system file picker) | works |
-| On-screen touch pad | works (menus and a full race); every button checked; L removed (Racer does not use it); BOOST button (one thumb: hold to charge, fires by itself after 1.2 s, quick re-tap fires now) |
+| On-screen touch pad | works (menus and a full race); every button checked; L removed (Racer does not use it); BOOST button (hold: accelerates, charges and fires whenever the game says the boost is ready) |
 | Gamepad | implemented, not tested |
 | Sound (audio microcode recompiled with RSPRecomp) | works; not yet checked for crackle or drift over long play |
 | Saves (16 Kbit EEPROM) | works: Tournament progress survives closing the app |
 | Home / app switch / screen lock | works: the game resumes where it was; landscape only |
 | Start screen (ROM picker, Play) | works |
 | Side menu: aspect 4:3 / 16:9 / 21:9 (true widescreen), sharp / smooth, resolution, FPS counter, pad options | works (in widescreen the HUD and menus stay 4:3-wide in the middle) |
-| Pad editor, save states, HUD out at the wide edges | planned |
+| Pad editor (move and resize every control) | works |
+| Save states, HUD out at the wide edges | planned |
 
 Every fix it took is listed with its cause in [docs/ANDROID-FIXES.md](docs/ANDROID-FIXES.md).
+
+## Screenshots
+
+Pixel 8, 2400x1080. The FPS counter in the corner is the menu's optional overlay.
+
+| | |
+|---|---|
+| ![Start screen](docs/screenshots/launcher.jpg) | ![Race in 21:9 with BOOST](docs/screenshots/race-21x9.jpg) |
+| **Start screen:** pick your own ROM, then Play | **Racing in 21:9**, HUD at its real width |
+| ![Title menu](docs/screenshots/title-4x3.jpg) | ![Attract demo](docs/screenshots/attract-demo.jpg) |
+| **Title menu** (menus stay 4:3) | **Attract demo** in 21:9 |
+| ![Side menu, display](docs/screenshots/menu-display.jpg) | ![Side menu, controls](docs/screenshots/menu-controls.jpg) |
+| **Side menu:** aspect ratio, sharp / smooth, resolution | **Controls:** pad, BOOST, editor, opacity, size, quit |
+| ![Pad editor](docs/screenshots/pad-editor.jpg) | |
+| **Pad editor:** drag to move, tap to resize | |
+
+The same spot in each aspect ratio:
+
+| 4:3 | 16:9 | 21:9 |
+|---|---|---|
+| ![4:3](docs/screenshots/aspect-4x3.jpg) | ![16:9](docs/screenshots/aspect-16x9.jpg) | ![21:9](docs/screenshots/aspect-21x9.jpg) |
+
+Game footage is from the author's own cartridge dump and shown only to illustrate the port; the game itself belongs
+to its rights holders and is not part of this repository.
 
 ## Tested on
 
